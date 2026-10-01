@@ -1,0 +1,30 @@
+{
+  "schemaVersion": 1,
+  "id": "schematic_supervisor",
+  "version": "${version}",
+  "name": "Schematic Supervisor",
+  "description": "Builds a selected Litematica schematic layer by layer with flight, restocks from registered chests, recovers from common faults, and verifies the result.",
+  "authors": ["michaelliruoxi"],
+  "contact": {
+    "homepage": "https://github.com/michaelliruoxi/schematic-supervisor",
+    "sources": "https://github.com/michaelliruoxi/schematic-supervisor",
+    "issues": "https://github.com/michaelliruoxi/schematic-supervisor/issues"
+  },
+  "license": "MIT",
+  "environment": "client",
+  "mixins": ["schematic-supervisor.mixins.json"],
+  "entrypoints": {
+    "client": [
+      "io.github.schematicsupervisor.fabric.SchematicSupervisorClient"
+    ]
+  },
+  "depends": {
+    "fabricloader": ">=${loader_version}",
+    "minecraft": "~${minecraft_version}",
+    "java": ">=21",
+    "fabric-api": "*",
+    "malilib": ">=${malilib_version}",
+    "litematica": ">=${litematica_version}",
+    "baritone": ">=${baritone_version}"
+  }
+}

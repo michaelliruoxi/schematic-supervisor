@@ -1,0 +1,26 @@
+.gradle/
+build/
+run/
+out/
+*.log
+
+__pycache__/
+*.py[cod]
+.coverage
+htmlcov/
+.pytest_cache/
+
+companion/build/
+companion/.build-tools/
+companion/dist/
+companion/logs/
+companion/monitor-state.json
+companion/monitor-state.json.tmp
+companion/*.spec
+
+companion/agent.local.json
+companion/agent-runs/
+runtime/
+# Captured runtime evidence and runner output (large); kept on disk, not versioned.
+data/
+*protocol-token.txt

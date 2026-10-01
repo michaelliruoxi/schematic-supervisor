@@ -1,0 +1,1302 @@
+{
+  "capture_kind": "live_read_only_menu_inspection",
+  "purchases_made": 0,
+  "verified_routes": [
+    "shop/blocks/2/birch_planks/buy_stacks",
+    "shop/blocks/4/glowstone/buy_stacks"
+  ],
+  "unverified": [
+    "purchase_receipts",
+    "post_purchase_navigation",
+    "replacement_hoe_purchase"
+  ],
+  "observed_cancel_return": "Buying Glowstone Cancel Transaction returned to Blocks (Page 1/5)",
+  "menus": [
+    {
+      "captured_at": "2026-09-11T19:12:02.988850900Z",
+      "route": "shop",
+      "title": "Shop | Economy",
+      "menu_id": 2,
+      "sync_id": 5,
+      "cursor_empty": true,
+      "entries": [
+        {
+          "slot": 10,
+          "label": "Ores",
+          "item_id": "minecraft:emerald",
+          "lore": [],
+          "stack_quantity": 0
+        },
+        {
+          "slot": 11,
+          "label": "Blocks",
+          "item_id": "minecraft:grass_block",
+          "lore": [],
+          "stack_quantity": 0
+        },
+        {
+          "slot": 12,
+          "label": "Farming",
+          "item_id": "minecraft:wheat",
+          "lore": [],
+          "stack_quantity": 0
+        },
+        {
+          "slot": 13,
+          "label": "Food",
+          "item_id": "minecraft:cooked_chicken",
+          "lore": [],
+          "stack_quantity": 0
+        },
+        {
+          "slot": 14,
+          "label": "Mob drops",
+          "item_id": "minecraft:bone",
+          "lore": [],
+          "stack_quantity": 0
+        },
+        {
+          "slot": 15,
+          "label": "Miscellaneous",
+          "item_id": "minecraft:saddle",
+          "lore": [],
+          "stack_quantity": 0
+        },
+        {
+          "slot": 16,
+          "label": "Spawners",
+          "item_id": "minecraft:spawner",
+          "lore": [],
+          "stack_quantity": 0
+        },
+        {
+          "slot": 19,
+          "label": "Tools",
+          "item_id": "minecraft:golden_axe",
+          "lore": [],
+          "stack_quantity": 0
+        },
+        {
+          "slot": 20,
+          "label": "Combat",
+          "item_id": "minecraft:diamond_sword",
+          "lore": [],
+          "stack_quantity": 0
+        },
+        {
+          "slot": 21,
+          "label": "Redstone",
+          "item_id": "minecraft:redstone",
+          "lore": [],
+          "stack_quantity": 0
+        },
+        {
+          "slot": 22,
+          "label": "Crop Hoppers",
+          "item_id": "minecraft:hopper",
+          "lore": [],
+          "stack_quantity": 0
+        },
+        {
+          "slot": 23,
+          "label": "Brewing",
+          "item_id": "minecraft:brewing_stand",
+          "lore": [],
+          "stack_quantity": 0
+        },
+        {
+          "slot": 24,
+          "label": "Decor",
+          "item_id": "minecraft:short_grass",
+          "lore": [],
+          "stack_quantity": 0
+        },
+        {
+          "slot": 25,
+          "label": "Quest Points",
+          "item_id": "minecraft:amethyst_shard",
+          "lore": [],
+          "stack_quantity": 0
+        }
+      ]
+    },
+    {
+      "captured_at": "2026-09-11T19:12:21.638710800Z",
+      "route": "shop/blocks/1",
+      "title": "Blocks (Page 1/5)",
+      "menu_id": 3,
+      "sync_id": 6,
+      "cursor_empty": true,
+      "entries": [
+        {
+          "slot": 10,
+          "label": "Grass Block",
+          "item_id": "minecraft:grass_block",
+          "lore": [
+            "Buy price: $1,000"
+          ],
+          "stack_quantity": 0
+        },
+        {
+          "slot": 11,
+          "label": "Dirt",
+          "item_id": "minecraft:dirt",
+          "lore": [
+            "Buy price: $800"
+          ],
+          "stack_quantity": 0
+        },
+        {
+          "slot": 12,
+          "label": "Coarse Dirt",
+          "item_id": "minecraft:coarse_dirt",
+          "lore": [
+            "Buy price: $900"
+          ],
+          "stack_quantity": 0
+        },
+        {
+          "slot": 13,
+          "label": "Rooted Dirt",
+          "item_id": "minecraft:rooted_dirt",
+          "lore": [
+            "Buy price: $900"
+          ],
+          "stack_quantity": 0
+        },
+        {
+          "slot": 14,
+          "label": "Dirt Path",
+          "item_id": "minecraft:dirt_path",
+          "lore": [
+            "Buy price: $950"
+          ],
+          "stack_quantity": 0
+        },
+        {
+          "slot": 15,
+          "label": "Mycelium",
+          "item_id": "minecraft:mycelium",
+          "lore": [
+            "Buy price: $5,000"
+          ],
+          "stack_quantity": 0
+        },
+        {
+          "slot": 16,
+          "label": "Podzol",
+          "item_id": "minecraft:podzol",
+          "lore": [
+            "Buy price: $2,500"
+          ],
+          "stack_quantity": 0
+        },
+        {
+          "slot": 19,
+          "label": "Sand",
+          "item_id": "minecraft:sand",
+          "lore": [
+            "Buy price: $1,200"
+          ],
+          "stack_quantity": 0
+        },
+        {
+          "slot": 20,
+          "label": "Sandstone",
+          "item_id": "minecraft:sandstone",
+          "lore": [
+            "Buy price: $400",
+            "Sell price: $80"
+          ],
+          "stack_quantity": 0
+        },
+        {
+          "slot": 21,
+          "label": "Clay",
+          "item_id": "minecraft:clay",
+          "lore": [
+            "Buy price: $150",
+            "Sell price: $0.4"
+          ],
+          "stack_quantity": 0
+        },
+        {
+          "slot": 22,
+          "label": "Gravel",
+          "item_id": "minecraft:gravel",
+          "lore": [
+            "Buy price: $475",
+            "Sell price: $2"
+          ],
+          "stack_quantity": 0
+        },
+        {
+          "slot": 23,
+          "label": "Hay Bale",
+          "item_id": "minecraft:hay_block",
+          "lore": [
+            "Buy price: $650",
+            "Sell price: $4.2"
+          ],
+          "stack_quantity": 0
+        },
+        {
+          "slot": 24,
+          "label": "Packed Mud",
+          "item_id": "minecraft:packed_mud",
+          "lore": [
+            "Buy price: $1,250"
+          ],
+          "stack_quantity": 0
+        },
+        {
+          "slot": 25,
+          "label": "Mud",
+          "item_id": "minecraft:mud",
+          "lore": [
+            "Buy price: $1,000"
+          ],
+          "stack_quantity": 0
+        },
+        {
+          "slot": 28,
+          "label": "Glass",
+          "item_id": "minecraft:glass",
+          "lore": [
+            "Buy price: $350",
+            "Sell price: $20"
+          ],
+          "stack_quantity": 0
+        },
+        {
+          "slot": 29,
+          "label": "Bookshelf",
+          "item_id": "minecraft:bookshelf",
+          "lore": [
+            "Buy price: $175",
+            "Sell price: $0.8"
+          ],
+          "stack_quantity": 0
+        },
+        {
+          "slot": 30,
+          "label": "Bricks",
+          "item_id": "minecraft:bricks",
+          "lore": [
+            "Buy price: $250",
+            "Sell price: $4.5"
+          ],
+          "stack_quantity": 0
+        },
+        {
+          "slot": 31,
+          "label": "Slime Block",
+          "item_id": "minecraft:slime_block",
+          "lore": [
+            "Buy price: $450",
+            "Sell price: $5.4"
+          ],
+          "stack_quantity": 0
+        },
+        {
+          "slot": 32,
+          "label": "Sea Lantern",
+          "item_id": "minecraft:sea_lantern",
+          "lore": [
+            "Buy price: $1,500",
+            "Sell price: $120"
+          ],
+          "stack_quantity": 0
+        },
+        {
+          "slot": 33,
+          "label": "Jack o'Lantern",
+          "item_id": "minecraft:jack_o_lantern",
+          "lore": [
+            "Buy price: $155",
+            "Sell price: $0.9"
+          ],
+          "stack_quantity": 0
+        },
+        {
+          "slot": 34,
+          "label": "Moss Block",
+          "item_id": "minecraft:moss_block",
+          "lore": [
+            "Buy price: $250"
+          ],
+          "stack_quantity": 0
+        },
+        {
+          "slot": 45,
+          "label": "Main Menu",
+          "item_id": "minecraft:birch_door",
+          "lore": [
+            "← Click to go back"
+          ],
+          "stack_quantity": 0
+        },
+        {
+          "slot": 50,
+          "label": "Next page →",
+          "item_id": "minecraft:paper",
+          "lore": [],
+          "stack_quantity": 0
+        }
+      ]
+    },
+    {
+      "captured_at": "2026-09-11T19:12:39.137728400Z",
+      "route": "shop/blocks/2",
+      "title": "Blocks (Page 2/5)",
+      "menu_id": 4,
+      "sync_id": 7,
+      "cursor_empty": true,
+      "entries": [
+        {
+          "slot": 10,
+          "label": "Oak Log",
+          "item_id": "minecraft:oak_log",
+          "lore": [
+            "Buy price: $35",
+            "Sell price: $0.15"
+          ],
+          "stack_quantity": 0
+        },
+        {
+          "slot": 11,
+          "label": "Birch Log",
+          "item_id": "minecraft:birch_log",
+          "lore": [
+            "Buy price: $37.5",
+            "Sell price: $0.2"
+          ],
+          "stack_quantity": 0
+        },
+        {
+          "slot": 12,
+          "label": "Spruce Log",
+          "item_id": "minecraft:spruce_log",
+          "lore": [
+            "Buy price: $38",
+            "Sell price: $0.21"
+          ],
+          "stack_quantity": 0
+        },
+        {
+          "slot": 13,
+          "label": "Jungle Log",
+          "item_id": "minecraft:jungle_log",
+          "lore": [
+            "Buy price: $40",
+            "Sell price: $0.22"
+          ],
+          "stack_quantity": 0
+        },
+        {
+          "slot": 14,
+          "label": "Acacia Log",
+          "item_id": "minecraft:acacia_log",
+          "lore": [
+            "Buy price: $50",
+            "Sell price: $0.23"
+          ],
+          "stack_quantity": 0
+        },
+        {
+          "slot": 15,
+          "label": "Dark Oak Log",
+          "item_id": "minecraft:dark_oak_log",
+          "lore": [
+            "Buy price: $65",
+            "Sell price: $0.27"
+          ],
+          "stack_quantity": 0
+        },
+        {
+          "slot": 16,
+          "label": "Mangrove Log",
+          "item_id": "minecraft:mangrove_log",
+          "lore": [
+            "Buy price: $70",
+            "Sell price: $0.32"
+          ],
+          "stack_quantity": 0
+        },
+        {
+          "slot": 19,
+          "label": "Oak Planks",
+          "item_id": "minecraft:oak_planks",
+          "lore": [
+            "Buy price: $8.25",
+            "Sell price: $0.04"
+          ],
+          "stack_quantity": 0
+        },
+        {
+          "slot": 20,
+          "label": "Birch Planks",
+          "item_id": "minecraft:birch_planks",
+          "lore": [
+            "Buy price: $8.75",
+            "Sell price: $0.0525"
+          ],
+          "stack_quantity": 0
+        },
+        {
+          "slot": 21,
+          "label": "Spruce Planks",
+          "item_id": "minecraft:spruce_planks",
+          "lore": [
+            "Buy price: $9",
+            "Sell price: $0.055"
+          ],
+          "stack_quantity": 0
+        },
+        {
+          "slot": 22,
+          "label": "Jungle Planks",
+          "item_id": "minecraft:jungle_planks",
+          "lore": [
+            "Buy price: $9.5",
+            "Sell price: $0.0575"
+          ],
+          "stack_quantity": 0
+        },
+        {
+          "slot": 23,
+          "label": "Acacia Planks",
+          "item_id": "minecraft:acacia_planks",
+          "lore": [
+            "Buy price: $12",
+            "Sell price: $0.0595"
+          ],
+          "stack_quantity": 0
+        },
+        {
+          "slot": 24,
+          "label": "Dark Oak Planks",
+          "item_id": "minecraft:dark_oak_planks",
+          "lore": [
+            "Buy price: $15.75",
+            "Sell price: $0.0695"
+          ],
+          "stack_quantity": 0
+        },
+        {
+          "slot": 25,
+          "label": "Mangrove Planks",
+          "item_id": "minecraft:mangrove_planks",
+          "lore": [
+            "Buy price: $17",
+            "Sell price: $0.0825"
+          ],
+          "stack_quantity": 0
+        },
+        {
+          "slot": 28,
+          "label": "Ice",
+          "item_id": "minecraft:ice",
+          "lore": [
+            "Buy price: $250",
+            "Sell price: $0.1"
+          ],
+          "stack_quantity": 0
+        },
+        {
+          "slot": 29,
+          "label": "Packed Ice",
+          "item_id": "minecraft:packed_ice",
+          "lore": [
+            "Buy price: $1,000"
+          ],
+          "stack_quantity": 0
+        },
+        {
+          "slot": 30,
+          "label": "Blue Ice",
+          "item_id": "minecraft:blue_ice",
+          "lore": [
+            "Buy price: $4,000"
+          ],
+          "stack_quantity": 0
+        },
+        {
+          "slot": 31,
+          "label": "Snow Block",
+          "item_id": "minecraft:snow_block",
+          "lore": [
+            "Buy price: $100",
+            "Sell price: $0.05"
+          ],
+          "stack_quantity": 0
+        },
+        {
+          "slot": 32,
+          "label": "Bone Block",
+          "item_id": "minecraft:bone_block",
+          "lore": [
+            "Buy price: $150",
+            "Sell price: $0.11"
+          ],
+          "stack_quantity": 0
+        },
+        {
+          "slot": 33,
+          "label": "Red Sand",
+          "item_id": "minecraft:red_sand",
+          "lore": [
+            "Buy price: $1,700"
+          ],
+          "stack_quantity": 0
+        },
+        {
+          "slot": 34,
+          "label": "Red Sandstone",
+          "item_id": "minecraft:red_sandstone",
+          "lore": [
+            "Buy price: $550"
+          ],
+          "stack_quantity": 0
+        },
+        {
+          "slot": 45,
+          "label": "Main Menu",
+          "item_id": "minecraft:birch_door",
+          "lore": [
+            "← Click to go back"
+          ],
+          "stack_quantity": 0
+        },
+        {
+          "slot": 48,
+          "label": "← Previous page",
+          "item_id": "minecraft:paper",
+          "lore": [],
+          "stack_quantity": 0
+        },
+        {
+          "slot": 50,
+          "label": "Next page →",
+          "item_id": "minecraft:paper",
+          "lore": [],
+          "stack_quantity": 0
+        }
+      ]
+    },
+    {
+      "captured_at": "2026-09-11T19:13:00.791173100Z",
+      "route": "shop/blocks/2/birch_planks",
+      "title": "Buying Birch Planks",
+      "menu_id": 5,
+      "sync_id": 8,
+      "cursor_empty": true,
+      "entries": [
+        {
+          "slot": 22,
+          "label": "Birch Planks",
+          "item_id": "minecraft:birch_planks",
+          "lore": [
+            "Buy price: $8.75"
+          ],
+          "stack_quantity": 0
+        },
+        {
+          "slot": 24,
+          "label": "Add 1x item",
+          "item_id": "minecraft:lime_stained_glass_pane",
+          "lore": [],
+          "stack_quantity": 0
+        },
+        {
+          "slot": 25,
+          "label": "Add 10x items",
+          "item_id": "minecraft:lime_stained_glass_pane",
+          "lore": [],
+          "stack_quantity": 0
+        },
+        {
+          "slot": 26,
+          "label": "Set to 64x items",
+          "item_id": "minecraft:lime_stained_glass_pane",
+          "lore": [],
+          "stack_quantity": 0
+        },
+        {
+          "slot": 35,
+          "label": "Buy stacks",
+          "item_id": "minecraft:yellow_stained_glass_pane",
+          "lore": [],
+          "stack_quantity": 0
+        },
+        {
+          "slot": 39,
+          "label": "Confirm Transaction",
+          "item_id": "minecraft:lime_stained_glass",
+          "lore": [],
+          "stack_quantity": 0
+        },
+        {
+          "slot": 41,
+          "label": "Cancel Transaction",
+          "item_id": "minecraft:red_stained_glass",
+          "lore": [],
+          "stack_quantity": 0
+        }
+      ]
+    },
+    {
+      "captured_at": "2026-09-11T19:13:20.988004100Z",
+      "route": "shop/blocks/2/birch_planks/buy_stacks",
+      "title": "Buying stacks of Birch Planks",
+      "menu_id": 6,
+      "sync_id": 9,
+      "cursor_empty": true,
+      "entries": [
+        {
+          "slot": 0,
+          "label": "Buy 1 stack",
+          "item_id": "minecraft:birch_planks",
+          "lore": [
+            "Price: $560"
+          ],
+          "stack_quantity": 1
+        },
+        {
+          "slot": 1,
+          "label": "Buy 2 stacks",
+          "item_id": "minecraft:birch_planks",
+          "lore": [
+            "Price: $1,120"
+          ],
+          "stack_quantity": 2
+        },
+        {
+          "slot": 2,
+          "label": "Buy 3 stacks",
+          "item_id": "minecraft:birch_planks",
+          "lore": [
+            "Price: $1,680"
+          ],
+          "stack_quantity": 3
+        },
+        {
+          "slot": 3,
+          "label": "Buy 4 stacks",
+          "item_id": "minecraft:birch_planks",
+          "lore": [
+            "Price: $2,240"
+          ],
+          "stack_quantity": 4
+        },
+        {
+          "slot": 4,
+          "label": "Buy 5 stacks",
+          "item_id": "minecraft:birch_planks",
+          "lore": [
+            "Price: $2,800"
+          ],
+          "stack_quantity": 5
+        },
+        {
+          "slot": 5,
+          "label": "Buy 6 stacks",
+          "item_id": "minecraft:birch_planks",
+          "lore": [
+            "Price: $3,360"
+          ],
+          "stack_quantity": 6
+        },
+        {
+          "slot": 6,
+          "label": "Buy 7 stacks",
+          "item_id": "minecraft:birch_planks",
+          "lore": [
+            "Price: $3,920"
+          ],
+          "stack_quantity": 7
+        },
+        {
+          "slot": 7,
+          "label": "Buy 8 stacks",
+          "item_id": "minecraft:birch_planks",
+          "lore": [
+            "Price: $4,480"
+          ],
+          "stack_quantity": 8
+        },
+        {
+          "slot": 8,
+          "label": "Buy 9 stacks",
+          "item_id": "minecraft:birch_planks",
+          "lore": [
+            "Price: $5,040"
+          ],
+          "stack_quantity": 9
+        },
+        {
+          "slot": 13,
+          "label": "← Back to Purchase",
+          "item_id": "minecraft:red_stained_glass",
+          "lore": [],
+          "stack_quantity": 0
+        }
+      ]
+    },
+    {
+      "captured_at": "2026-09-11T19:14:12.389605600Z",
+      "route": "shop/blocks/3",
+      "title": "Blocks (Page 3/5)",
+      "menu_id": 11,
+      "sync_id": 13,
+      "cursor_empty": true,
+      "entries": [
+        {
+          "slot": 10,
+          "label": "Cobblestone ↑ 13.33%",
+          "item_id": "minecraft:cobblestone",
+          "lore": [
+            "Buy price: $10",
+            "Sell price: $0.17"
+          ],
+          "stack_quantity": 0
+        },
+        {
+          "slot": 11,
+          "label": "Mossy Cobblestone ↑ 12.0%",
+          "item_id": "minecraft:mossy_cobblestone",
+          "lore": [
+            "Buy price: $400",
+            "Sell price: $0.28"
+          ],
+          "stack_quantity": 0
+        },
+        {
+          "slot": 12,
+          "label": "Stone ↑ 10.0%",
+          "item_id": "minecraft:stone",
+          "lore": [
+            "Buy price: $15",
+            "Sell price: $0.22"
+          ],
+          "stack_quantity": 0
+        },
+        {
+          "slot": 13,
+          "label": "Cobbled Deepslate ↑ 8.33%",
+          "item_id": "minecraft:cobbled_deepslate",
+          "lore": [
+            "Buy price: $100",
+            "Sell price: $0.26"
+          ],
+          "stack_quantity": 0
+        },
+        {
+          "slot": 14,
+          "label": "Deepslate ↑ 10.71%",
+          "item_id": "minecraft:deepslate",
+          "lore": [
+            "Buy price: $200",
+            "Sell price: $0.31"
+          ],
+          "stack_quantity": 0
+        },
+        {
+          "slot": 15,
+          "label": "Tuff",
+          "item_id": "minecraft:tuff",
+          "lore": [
+            "Buy price: $5,000"
+          ],
+          "stack_quantity": 0
+        },
+        {
+          "slot": 16,
+          "label": "Andesite",
+          "item_id": "minecraft:andesite",
+          "lore": [
+            "Buy price: $1,000"
+          ],
+          "stack_quantity": 0
+        },
+        {
+          "slot": 19,
+          "label": "Diorite",
+          "item_id": "minecraft:diorite",
+          "lore": [
+            "Buy price: $1,000"
+          ],
+          "stack_quantity": 0
+        },
+        {
+          "slot": 20,
+          "label": "Calcite",
+          "item_id": "minecraft:calcite",
+          "lore": [
+            "Buy price: $4,500"
+          ],
+          "stack_quantity": 0
+        },
+        {
+          "slot": 21,
+          "label": "Granite",
+          "item_id": "minecraft:granite",
+          "lore": [
+            "Buy price: $1,000"
+          ],
+          "stack_quantity": 0
+        },
+        {
+          "slot": 22,
+          "label": "Terracotta",
+          "item_id": "minecraft:terracotta",
+          "lore": [
+            "Buy price: $160",
+            "Sell price: $0.42"
+          ],
+          "stack_quantity": 0
+        },
+        {
+          "slot": 23,
+          "label": "White Concrete",
+          "item_id": "minecraft:white_concrete",
+          "lore": [
+            "Buy price: $1,500"
+          ],
+          "stack_quantity": 0
+        },
+        {
+          "slot": 24,
+          "label": "White Concrete Powder",
+          "item_id": "minecraft:white_concrete_powder",
+          "lore": [
+            "Buy price: $1,500"
+          ],
+          "stack_quantity": 0
+        },
+        {
+          "slot": 28,
+          "label": "Basalt",
+          "item_id": "minecraft:basalt",
+          "lore": [
+            "Buy price: $650",
+            "Sell price: $0.1"
+          ],
+          "stack_quantity": 0
+        },
+        {
+          "slot": 29,
+          "label": "Blackstone",
+          "item_id": "minecraft:blackstone",
+          "lore": [
+            "Buy price: $1,250"
+          ],
+          "stack_quantity": 0
+        },
+        {
+          "slot": 30,
+          "label": "Obsidian",
+          "item_id": "minecraft:obsidian",
+          "lore": [
+            "Buy price: $900",
+            "Sell price: $40"
+          ],
+          "stack_quantity": 0
+        },
+        {
+          "slot": 31,
+          "label": "Gilded Blackstone",
+          "item_id": "minecraft:gilded_blackstone",
+          "lore": [
+            "Buy price: $7,000"
+          ],
+          "stack_quantity": 0
+        },
+        {
+          "slot": 45,
+          "label": "Main Menu",
+          "item_id": "minecraft:birch_door",
+          "lore": [
+            "← Click to go back"
+          ],
+          "stack_quantity": 0
+        },
+        {
+          "slot": 48,
+          "label": "← Previous page",
+          "item_id": "minecraft:paper",
+          "lore": [],
+          "stack_quantity": 0
+        },
+        {
+          "slot": 50,
+          "label": "Next page →",
+          "item_id": "minecraft:paper",
+          "lore": [],
+          "stack_quantity": 0
+        }
+      ]
+    },
+    {
+      "captured_at": "2026-09-11T19:14:23.489794500Z",
+      "route": "shop/blocks/4",
+      "title": "Blocks (Page 4/5)",
+      "menu_id": 12,
+      "sync_id": 14,
+      "cursor_empty": true,
+      "entries": [
+        {
+          "slot": 10,
+          "label": "Glowstone",
+          "item_id": "minecraft:glowstone",
+          "lore": [
+            "Buy price: $500",
+            "Sell price: $3.5"
+          ],
+          "stack_quantity": 0
+        },
+        {
+          "slot": 11,
+          "label": "Magma Block",
+          "item_id": "minecraft:magma_block",
+          "lore": [
+            "Buy price: $1,200"
+          ],
+          "stack_quantity": 0
+        },
+        {
+          "slot": 12,
+          "label": "Netherrack",
+          "item_id": "minecraft:netherrack",
+          "lore": [
+            "Buy price: $35",
+            "Sell price: $0.06"
+          ],
+          "stack_quantity": 0
+        },
+        {
+          "slot": 13,
+          "label": "Nether Bricks",
+          "item_id": "minecraft:nether_bricks",
+          "lore": [
+            "Buy price: $250",
+            "Sell price: $1.8"
+          ],
+          "stack_quantity": 0
+        },
+        {
+          "slot": 14,
+          "label": "Red Nether Bricks",
+          "item_id": "minecraft:red_nether_bricks",
+          "lore": [
+            "Buy price: $550",
+            "Sell price: $2.4"
+          ],
+          "stack_quantity": 0
+        },
+        {
+          "slot": 15,
+          "label": "Chiseled Nether Bricks",
+          "item_id": "minecraft:chiseled_nether_bricks",
+          "lore": [
+            "Buy price: $350",
+            "Sell price: $1.9"
+          ],
+          "stack_quantity": 0
+        },
+        {
+          "slot": 16,
+          "label": "Cracked Nether Bricks",
+          "item_id": "minecraft:cracked_nether_bricks",
+          "lore": [
+            "Buy price: $400",
+            "Sell price: $2.1"
+          ],
+          "stack_quantity": 0
+        },
+        {
+          "slot": 19,
+          "label": "Soul Sand",
+          "item_id": "minecraft:soul_sand",
+          "lore": [
+            "Buy price: $275",
+            "Sell price: $0.55"
+          ],
+          "stack_quantity": 0
+        },
+        {
+          "slot": 20,
+          "label": "Soul Soil",
+          "item_id": "minecraft:soul_soil",
+          "lore": [
+            "Buy price: $200",
+            "Sell price: $0.15"
+          ],
+          "stack_quantity": 0
+        },
+        {
+          "slot": 21,
+          "label": "Nether Wart Block",
+          "item_id": "minecraft:nether_wart_block",
+          "lore": [
+            "Buy price: $500",
+            "Sell price: $5.5"
+          ],
+          "stack_quantity": 0
+        },
+        {
+          "slot": 22,
+          "label": "Crimson Nylium",
+          "item_id": "minecraft:crimson_nylium",
+          "lore": [
+            "Buy price: $1,000",
+            "Sell price: $0.2"
+          ],
+          "stack_quantity": 0
+        },
+        {
+          "slot": 23,
+          "label": "Crimson Stem",
+          "item_id": "minecraft:crimson_stem",
+          "lore": [
+            "Buy price: $350",
+            "Sell price: $0.1"
+          ],
+          "stack_quantity": 0
+        },
+        {
+          "slot": 24,
+          "label": "Crimson Hyphae",
+          "item_id": "minecraft:crimson_hyphae",
+          "lore": [
+            "Buy price: $400",
+            "Sell price: $0.15"
+          ],
+          "stack_quantity": 0
+        },
+        {
+          "slot": 28,
+          "label": "Warped Nylium",
+          "item_id": "minecraft:warped_nylium",
+          "lore": [
+            "Buy price: $1,000",
+            "Sell price: $0.2"
+          ],
+          "stack_quantity": 0
+        },
+        {
+          "slot": 29,
+          "label": "Warped Stem",
+          "item_id": "minecraft:warped_stem",
+          "lore": [
+            "Buy price: $450",
+            "Sell price: $0.1"
+          ],
+          "stack_quantity": 0
+        },
+        {
+          "slot": 30,
+          "label": "Warped Wart Block",
+          "item_id": "minecraft:warped_wart_block",
+          "lore": [
+            "Buy price: $900",
+            "Sell price: $5.5"
+          ],
+          "stack_quantity": 0
+        },
+        {
+          "slot": 31,
+          "label": "Warped Hyphae",
+          "item_id": "minecraft:warped_hyphae",
+          "lore": [
+            "Buy price: $1,250",
+            "Sell price: $0.4"
+          ],
+          "stack_quantity": 0
+        },
+        {
+          "slot": 45,
+          "label": "Main Menu",
+          "item_id": "minecraft:birch_door",
+          "lore": [
+            "← Click to go back"
+          ],
+          "stack_quantity": 0
+        },
+        {
+          "slot": 48,
+          "label": "← Previous page",
+          "item_id": "minecraft:paper",
+          "lore": [],
+          "stack_quantity": 0
+        },
+        {
+          "slot": 50,
+          "label": "Next page →",
+          "item_id": "minecraft:paper",
+          "lore": [],
+          "stack_quantity": 0
+        }
+      ]
+    },
+    {
+      "captured_at": "2026-09-11T19:14:33.888722700Z",
+      "route": "shop/blocks/4/glowstone",
+      "title": "Buying Glowstone",
+      "menu_id": 13,
+      "sync_id": 15,
+      "cursor_empty": true,
+      "entries": [
+        {
+          "slot": 22,
+          "label": "Glowstone",
+          "item_id": "minecraft:glowstone",
+          "lore": [
+            "Buy price: $500"
+          ],
+          "stack_quantity": 0
+        },
+        {
+          "slot": 24,
+          "label": "Add 1x item",
+          "item_id": "minecraft:lime_stained_glass_pane",
+          "lore": [],
+          "stack_quantity": 0
+        },
+        {
+          "slot": 25,
+          "label": "Add 10x items",
+          "item_id": "minecraft:lime_stained_glass_pane",
+          "lore": [],
+          "stack_quantity": 0
+        },
+        {
+          "slot": 26,
+          "label": "Set to 64x items",
+          "item_id": "minecraft:lime_stained_glass_pane",
+          "lore": [],
+          "stack_quantity": 0
+        },
+        {
+          "slot": 35,
+          "label": "Buy stacks",
+          "item_id": "minecraft:yellow_stained_glass_pane",
+          "lore": [],
+          "stack_quantity": 0
+        },
+        {
+          "slot": 39,
+          "label": "Confirm Transaction",
+          "item_id": "minecraft:lime_stained_glass",
+          "lore": [],
+          "stack_quantity": 0
+        },
+        {
+          "slot": 41,
+          "label": "Cancel Transaction",
+          "item_id": "minecraft:red_stained_glass",
+          "lore": [],
+          "stack_quantity": 0
+        }
+      ]
+    },
+    {
+      "captured_at": "2026-09-11T19:14:43.937372900Z",
+      "route": "shop/blocks/4/glowstone/buy_stacks",
+      "title": "Buying stacks of Glowstone",
+      "menu_id": 14,
+      "sync_id": 16,
+      "cursor_empty": true,
+      "entries": [
+        {
+          "slot": 0,
+          "label": "Buy 1 stack",
+          "item_id": "minecraft:glowstone",
+          "lore": [
+            "Price: $32,000"
+          ],
+          "stack_quantity": 1
+        },
+        {
+          "slot": 1,
+          "label": "Buy 2 stacks",
+          "item_id": "minecraft:glowstone",
+          "lore": [
+            "Price: $64,000"
+          ],
+          "stack_quantity": 2
+        },
+        {
+          "slot": 2,
+          "label": "Buy 3 stacks",
+          "item_id": "minecraft:glowstone",
+          "lore": [
+            "Price: $96,000"
+          ],
+          "stack_quantity": 3
+        },
+        {
+          "slot": 3,
+          "label": "Buy 4 stacks",
+          "item_id": "minecraft:glowstone",
+          "lore": [
+            "Price: $128,000"
+          ],
+          "stack_quantity": 4
+        },
+        {
+          "slot": 4,
+          "label": "Buy 5 stacks",
+          "item_id": "minecraft:glowstone",
+          "lore": [
+            "Price: $160,000"
+          ],
+          "stack_quantity": 5
+        },
+        {
+          "slot": 5,
+          "label": "Buy 6 stacks",
+          "item_id": "minecraft:glowstone",
+          "lore": [
+            "Price: $192,000"
+          ],
+          "stack_quantity": 6
+        },
+        {
+          "slot": 6,
+          "label": "Buy 7 stacks",
+          "item_id": "minecraft:glowstone",
+          "lore": [
+            "Price: $224,000"
+          ],
+          "stack_quantity": 7
+        },
+        {
+          "slot": 7,
+          "label": "Buy 8 stacks",
+          "item_id": "minecraft:glowstone",
+          "lore": [
+            "Price: $256,000"
+          ],
+          "stack_quantity": 8
+        },
+        {
+          "slot": 8,
+          "label": "Buy 9 stacks",
+          "item_id": "minecraft:glowstone",
+          "lore": [
+            "Price: $288,000"
+          ],
+          "stack_quantity": 9
+        },
+        {
+          "slot": 13,
+          "label": "← Back to Purchase",
+          "item_id": "minecraft:red_stained_glass",
+          "lore": [],
+          "stack_quantity": 0
+        }
+      ]
+    }
+  ]
+}

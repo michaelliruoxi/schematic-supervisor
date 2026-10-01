@@ -1,0 +1,30 @@
+{
+  "server": {
+    "host": "127.0.0.1",
+    "port": 8766,
+    "max_request_bytes": 262144,
+    "token_env": ""
+  },
+  "mod": {
+    "base_url": "http://127.0.0.1:8765",
+    "timeout_seconds": 3.0,
+    "token_env": ""
+  },
+  "ai": {
+    "provider": "disabled",
+    "endpoint": "",
+    "model": "",
+    "timeout_seconds": 10.0,
+    "api_key_env": ""
+  },
+  "logging": {
+    "directory": "logs",
+    "filename": "companion.log",
+    "level": "INFO",
+    "max_bytes": 1048576,
+    "backup_count": 4
+  },
+  "ui": {
+    "poll_interval_ms": 250
+  }
+}
