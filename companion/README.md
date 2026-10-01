@@ -2,9 +2,11 @@
 
 ## Windows live monitor
 
-Double-click **`dist\SchematicSupervisor.exe`**. No Python installation or configuration is needed
-to use the packaged app in this project. It finds the dedicated profile's pairing file on its own
-and reads the mod every second. Minecraft must be running with Schematic Supervisor enabled.
+Download **`SchematicSupervisor.exe`** from the
+[Releases](https://github.com/michaelliruoxi/schematic-supervisor/releases) page, or
+[build it](#build-the-windows-executable) into `dist\`, and double-click it. It needs no Python
+installation or configuration. It finds the mod's pairing file on its own (see below) and reads the
+mod every second. Minecraft must be running with Schematic Supervisor enabled.
 
 The monitor opens as a small card that stays on top of other windows (Unpin turns that off); later
 it reopens in the layout you last used. The card shows:
@@ -85,7 +87,7 @@ up to three folders above, which finds `runtime\game` in this project, and then 
 launcher's game folder, `%APPDATA%\.minecraft`. For any other game folder, supply it explicitly:
 
 ```powershell
-.\SchematicSupervisor.exe --token-file "$env:APPDATA\.minecraft\config\schematic-supervisor\protocol-token.txt"
+.\SchematicSupervisor.exe --token-file "<game folder>\config\schematic-supervisor\protocol-token.txt"
 ```
 
 Read-only connection diagnostics, including progress, for the packaged executable:
