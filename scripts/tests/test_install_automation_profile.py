@@ -42,6 +42,23 @@ def prepared_installation(root):
     return minecraft, executable
 
 
+def stage_new_supervisor(root):
+    """Stage a renamed supervisor jar, as after a version bump."""
+    bundle = root / "build" / "automation-mods"
+    (bundle / "schematic-supervisor-0.2.jar").unlink()
+    mod(bundle / "schematic-supervisor-0.3.jar", "schematic_supervisor")
+
+
+def files(root, skip=None):
+    """Every file under root by relative path, except under the skipped folder."""
+    result = {}
+    for path in root.rglob("*"):
+        relative = path.relative_to(root).as_posix()
+        if path.is_file() and not (skip and relative.startswith(skip + "/")):
+            result[relative] = path.read_bytes()
+    return result
+
+
 @unittest.skipUnless(os.name == "nt", "The installer process guard uses Windows PowerShell.")
 class ProcessGuardTests(unittest.TestCase):
     def run_with_process_inventory(self, processes, *, inspection_failed=False, action=None):
@@ -353,6 +370,81 @@ class ProfileInstallerTests(unittest.TestCase):
             self.assertTrue(settings["custom_setting"])
             self.assertEqual(settings["model"], "gpt-6-astra")
             self.assertEqual(settings["model_policy"], "on-error")
+
+    def test_invalid_runner_settings_fail_before_the_profile_changes(self):
+        for content in ("{not json", "[]", '"text"'):
+            with self.subTest(content=content), tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary)
+                minecraft, executable = prepared_installation(root)
+                with patch.object(installer, "ROOT", root), patch.object(installer, "ensure_game_closed"):
+                    installer.install(minecraft, executable, executable)
+                    stage_new_supervisor(root)
+                    (root / "companion" / "agent.local.json").write_text(content, encoding="utf-8")
+                    before = files(root)
+                    with self.assertRaisesRegex(ValueError, "Runner settings"):
+                        installer.install(minecraft, executable, executable)
+                self.assertEqual(before, files(root))
+
+    def test_an_unreadable_installed_jar_fails_before_the_old_supervisor_moves(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            minecraft, executable = prepared_installation(root)
+            with patch.object(installer, "ROOT", root), patch.object(installer, "ensure_game_closed"):
+                installer.install(minecraft, executable, executable)
+                stage_new_supervisor(root)
+                (root / "runtime" / "game" / "mods" / "zz-damaged.jar").write_bytes(b"not a jar")
+                before = files(root)
+                with self.assertRaisesRegex(ValueError, "Cannot identify installed mod zz-damaged.jar"):
+                    installer.install(minecraft, executable, executable)
+            self.assertEqual(before, files(root))
+            self.assertEqual(1, len(list((root / "runtime" / "installation-backups").iterdir())))
+
+    def test_a_failed_write_puts_back_the_previous_profile(self):
+        def failing_metadata(path, value):
+            if path.name == "installation.json":
+                raise OSError("disk full")
+            original(path, value)
+
+        original = installer.atomic_json
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            minecraft, executable = prepared_installation(root)
+            with patch.object(installer, "ROOT", root), patch.object(installer, "ensure_game_closed"):
+                fresh = files(root)
+                with patch.object(installer, "atomic_json", side_effect=failing_metadata), \
+                        self.assertRaisesRegex(OSError, "disk full"):
+                    installer.install(minecraft, executable, executable, shop_purchases=True)
+                self.assertEqual(fresh, files(root, skip="runtime/installation-backups"))
+                installer.install(minecraft, executable, executable)
+                stage_new_supervisor(root)
+                installed = files(root, skip="runtime/installation-backups")
+                with patch.object(installer, "atomic_json", side_effect=failing_metadata), \
+                        self.assertRaisesRegex(OSError, "disk full"):
+                    installer.install(minecraft, executable, executable, defer_planting=True)
+                self.assertEqual(installed, files(root, skip="runtime/installation-backups"))
+                recorded = json.loads((root / "runtime" / "installation.json").read_text())
+                for entry in recorded["mods"]:
+                    jar = root / "runtime" / "game" / "mods" / entry["name"]
+                    self.assertEqual(entry["sha256"], hashlib.sha256(jar.read_bytes()).hexdigest())
+
+    def test_a_failed_restore_names_what_it_left_behind(self):
+        def failing_metadata(path, value):
+            if path.name == "installation.json":
+                raise OSError("disk full")
+            original(path, value)
+
+        original = installer.atomic_json
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            minecraft, executable = prepared_installation(root)
+            with patch.object(installer, "ROOT", root), patch.object(installer, "ensure_game_closed"):
+                installer.install(minecraft, executable, executable)
+                stage_new_supervisor(root)
+                with patch.object(installer, "atomic_json", side_effect=failing_metadata), \
+                        patch.object(installer, "atomic_bytes", side_effect=OSError("still full")), \
+                        self.assertRaisesRegex(ValueError, "disk full; the previous profile could not be fully "
+                                                           "restored .*launcher_profiles.json.*Its backups are in"):
+                    installer.install(minecraft, executable, executable)
 
 
 if __name__ == "__main__":

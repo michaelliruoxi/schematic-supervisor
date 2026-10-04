@@ -497,17 +497,32 @@ class SupervisorRunner:
         self._pending_start: tuple[str, int] | None = None
         self._startup_resume_pending = False
         self._startup_connection_wait = False
+        self._audit_unavailable = False
 
     def emit(self, event: str, **details: Any) -> None:
         record = {"time": datetime.now(timezone.utc).isoformat(), "event": event, **details}
         if self._emit_callback:
             self._emit_callback(record)
-        else:
-            # Redirected Windows stdout may use cp1252; JSON escapes preserve every Unicode value.
-            print(json.dumps(record, ensure_ascii=True), flush=True)
+            return
+        # Logging is best effort: a full disk or a closed console must not stop supervision or a safety pause.
+        # Redirected Windows stdout may use cp1252; JSON escapes preserve every Unicode value.
+        self._print(json.dumps(record, ensure_ascii=True))
+        try:
             self.options.run_directory.mkdir(parents=True, exist_ok=True)
             with (self.options.run_directory / "supervision.jsonl").open("a", encoding="utf-8") as log:
                 log.write(json.dumps(record, ensure_ascii=False) + "\n")
+        except (OSError, ValueError) as error:
+            if not self._audit_unavailable:
+                self._audit_unavailable = True
+                self._print(json.dumps({"time": record["time"], "event": "audit_log_unavailable",
+                                        "message": f"{type(error).__name__}: {error}"}, ensure_ascii=True))
+
+    @staticmethod
+    def _print(line: str) -> None:
+        try:
+            print(line, flush=True)
+        except (OSError, ValueError):
+            pass
 
     def _read(self) -> dict[str, Any]:
         return live_observation(self.bridge.observe())
@@ -636,9 +651,10 @@ class SupervisorRunner:
             request_id = "agent-failure-" + uuid4().hex
             self.own_requests.add(request_id)
             result = self.bridge.control("PAUSE", request_id=request_id)
-            self.emit("failure_pause", result=result)
         except Exception as error:
             self.emit("failure_pause_unconfirmed", message=str(error))
+            return
+        self.emit("failure_pause", result=result)
 
     def _repair(self, observation: dict[str, Any], reason: str) -> str:
         if not self.options.allow_repair:
@@ -834,13 +850,18 @@ class SupervisorRunner:
                     errors = 0
                     self.sleep(self.options.poll_seconds)
                 except AgentCancelled as error:
-                    self.emit("agent_cancelled", message=str(error))
-                    self._pause_on_failure()
+                    try:
+                        self.emit("agent_cancelled", message=str(error))
+                    finally:
+                        self._pause_on_failure()
                     return "agent_cancelled"
                 except (RunnerError, OSError, ValueError) as error:
                     errors += 1
-                    self.emit("error", consecutive_errors=errors, message=str(error))
-                    self._pause_on_failure()
+                    try:
+                        self.emit("error", consecutive_errors=errors, message=str(error))
+                    finally:
+                        # Whatever happens to the log, the safety pause is attempted.
+                        self._pause_on_failure()
                     # Do not keep launching agents after a safety pause. Transport/read
                     # failures may be retried a bounded number of times before giving up.
                     if errors >= self.options.max_errors or self.run_id is not None:
@@ -853,6 +874,10 @@ class SupervisorRunner:
             self._pause_on_failure()
             self.emit("interrupted")
             return "interrupted"
+        except Exception:
+            # An unexpected fault still leaves active work paused before the runner exits.
+            self._pause_on_failure()
+            raise
 
 
 def main(argv: list[str] | None = None) -> int:

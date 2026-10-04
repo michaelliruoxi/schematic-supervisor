@@ -466,6 +466,83 @@ class SupervisorRunnerTests(unittest.TestCase):
         self.assertEqual(backend.decisions, 1)
         self.assertEqual([action for action, _ in bridge.controls], ["PAUSE"])
 
+    def test_a_full_disk_does_not_stop_the_failure_pause(self):
+        def fail(_state, _cancel):
+            raise RunnerError("Agent decision failed with exit code 1.")
+
+        real_open = Path.open
+
+        def disk_full(path, *args, **kwargs):
+            if path.name == "supervision.jsonl":
+                raise OSError(28, "No space left on device")
+            return real_open(path, *args, **kwargs)
+
+        bridge = MemoryBridge()
+        runner = SupervisorRunner(bridge, ScriptedBackend(on_decide=fail), self.options,
+                                  sleeper=self.sleep, clock=lambda: self.now)
+        console = io.StringIO()
+        with patch.object(Path, "open", disk_full), patch.object(sys, "stdout", console):
+            self.assertEqual(runner.run(), "failed")
+        self.assertEqual([action for action, _ in bridge.controls], ["PAUSE"])
+        events = [json.loads(line)["event"] for line in console.getvalue().splitlines()]
+        self.assertEqual(events.count("audit_log_unavailable"), 1)
+        self.assertLess(events.index("error"), events.index("failure_pause"))
+
+    def test_a_closed_console_does_not_stop_supervision_or_its_audit_log(self):
+        def fail(_state, _cancel):
+            raise RunnerError("Agent decision failed with exit code 1.")
+
+        bridge = MemoryBridge()
+        runner = SupervisorRunner(bridge, ScriptedBackend(on_decide=fail), self.options,
+                                  sleeper=self.sleep, clock=lambda: self.now)
+        console = io.StringIO()
+        console.close()
+        with patch.object(sys, "stdout", console):
+            self.assertEqual(runner.run(), "failed")
+        self.assertEqual([action for action, _ in bridge.controls], ["PAUSE"])
+        audit = (self.options.run_directory / "supervision.jsonl").read_text(encoding="utf-8")
+        self.assertIn("failure_pause", [json.loads(line)["event"] for line in audit.splitlines()])
+
+    def test_a_failing_event_sink_still_pauses(self):
+        def fail(_state, _cancel):
+            raise RunnerError("Agent decision failed with exit code 1.")
+
+        def sink(record):
+            if record["event"] == "error":
+                raise RuntimeError("event sink unavailable")
+            self.events.append(record)
+
+        bridge = MemoryBridge()
+        runner = SupervisorRunner(bridge, ScriptedBackend(on_decide=fail), self.options, emit=sink,
+                                  sleeper=self.sleep, clock=lambda: self.now)
+        with self.assertRaisesRegex(RuntimeError, "event sink unavailable"):
+            runner.run()
+        self.assertEqual([action for action, _ in bridge.controls], ["PAUSE"])
+        self.assertIn("failure_pause", [event["event"] for event in self.events])
+
+    def test_an_unexpected_fault_pauses_before_the_runner_exits(self):
+        def fail(_state, _cancel):
+            raise TypeError("unexpected observation shape")
+
+        bridge = MemoryBridge()
+        with self.assertRaisesRegex(TypeError, "unexpected observation shape"):
+            self.runner(bridge, ScriptedBackend(on_decide=fail)).run()
+        self.assertEqual([action for action, _ in bridge.controls], ["PAUSE"])
+
+    def test_a_pause_whose_log_fails_is_not_reported_as_unconfirmed(self):
+        def sink(record):
+            if record["event"] == "failure_pause":
+                raise OSError("log unavailable")
+            self.events.append(record)
+
+        bridge = MemoryBridge()
+        runner = SupervisorRunner(bridge, ScriptedBackend(), self.options, emit=sink,
+                                  sleeper=self.sleep, clock=lambda: self.now)
+        with self.assertRaisesRegex(OSError, "log unavailable"):
+            runner._pause_on_failure()
+        self.assertEqual([action for action, _ in bridge.controls], ["PAUSE"])
+        self.assertNotIn("failure_pause_unconfirmed", [event["event"] for event in self.events])
+
     def test_unknown_start_ack_is_not_retried(self):
         bridge = MemoryBridge(observation("STOPPED"))
         bridge.accept_controls = False

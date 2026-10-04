@@ -3,11 +3,15 @@ package io.github.schematicsupervisor.fabric;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import java.io.IOException;
+import java.net.InetAddress;
+import java.net.Socket;
+import java.net.SocketException;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -475,6 +479,63 @@ final class ControlHttpServerTest {
                     .statusCode());
             assertEquals(415, CLIENT.send(text, HttpResponse.BodyHandlers.ofString())
                     .statusCode());
+        }
+    }
+
+    @Test
+    void clientsThatStopSendingAreDisconnectedAndCannotHoldBothWorkers() throws Exception {
+        try (ControlHttpServer server = new ControlHttpServer(
+                0, "shared-token", Duration.ofMillis(100), Duration.ofMillis(500),
+                (request, completion) -> { },
+                () -> "{\"run_id\":\"run-1\"}".getBytes(StandardCharsets.UTF_8), () -> null)) {
+            server.start();
+            // One stalls inside an authenticated body, the other before its request line ends,
+            // where no handler or token check has run yet.
+            try (Socket unfinishedBody = stalledRequest(server,
+                         "POST /v1/control HTTP/1.1\r\nHost: 127.0.0.1\r\nX-Supervisor-Token: shared-token\r\n"
+                                 + "Content-Type: application/json\r\nContent-Length: 64\r\n\r\n{\"action\"");
+                 Socket unfinishedRequestLine = stalledRequest(server, "GET /v1/obs")) {
+                HttpRequest observation = HttpRequest.newBuilder(
+                                URI.create("http://127.0.0.1:" + server.port() + "/v1/observation"))
+                        .timeout(Duration.ofSeconds(5))
+                        .header("X-Supervisor-Token", "shared-token")
+                        .GET()
+                        .build();
+
+                assertEquals(200, CLIENT.send(observation, HttpResponse.BodyHandlers.ofString()).statusCode());
+                assertClosedByServer(unfinishedBody);
+                assertClosedByServer(unfinishedRequestLine);
+                // Interrupted workers serve later exchanges normally.
+                for (int attempt = 0; attempt < 4; attempt++) {
+                    assertEquals(200, CLIENT.send(observation, HttpResponse.BodyHandlers.ofString())
+                            .statusCode());
+                }
+            }
+        }
+    }
+
+    @Test
+    void exchangeTimeoutMustExceedCallbackTimeout() {
+        assertThrows(IllegalArgumentException.class, () -> new ControlHttpServer(
+                0, null, Duration.ofSeconds(1), Duration.ofSeconds(1),
+                (request, completion) -> { }, () -> null, () -> null));
+    }
+
+    private static Socket stalledRequest(ControlHttpServer server, String partialRequest)
+            throws IOException {
+        Socket socket = new Socket(InetAddress.getByName("127.0.0.1"), server.port());
+        socket.getOutputStream().write(partialRequest.getBytes(StandardCharsets.US_ASCII));
+        socket.getOutputStream().flush();
+        return socket;
+    }
+
+    private static void assertClosedByServer(Socket socket) throws IOException {
+        // Without a deadline the server never closes it and this read times out.
+        socket.setSoTimeout(5_000);
+        try {
+            assertEquals(-1, socket.getInputStream().read());
+        } catch (SocketException reset) {
+            // A reset also shows that the server dropped the connection.
         }
     }
 

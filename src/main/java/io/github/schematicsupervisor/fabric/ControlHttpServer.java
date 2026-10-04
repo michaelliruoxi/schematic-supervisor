@@ -24,6 +24,9 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -34,6 +37,8 @@ import java.util.function.Supplier;
  */
 final class ControlHttpServer implements AutoCloseable {
     private static final Duration DEFAULT_CALLBACK_TIMEOUT = Duration.ofSeconds(3);
+    // Time beyond the callback timeout for a client to send its request and read the response.
+    private static final Duration REQUEST_ALLOWANCE = Duration.ofSeconds(5);
     private static final int BACKLOG = 16;
     private static final int HTTP_OK = 200;
     private static final int HTTP_BAD_REQUEST = 400;
@@ -52,6 +57,8 @@ final class ControlHttpServer implements AutoCloseable {
 
     private final HttpServer server;
     private final ExecutorService executor;
+    private final ScheduledThreadPoolExecutor deadlines;
+    private final long exchangeTimeoutNanos;
     private final byte[] token;
     private final Duration callbackTimeout;
     private final ClientThreadControl callback;
@@ -121,6 +128,30 @@ final class ControlHttpServer implements AutoCloseable {
             Supplier<byte[]> observation,
             Supplier<byte[]> progress
     ) throws IOException {
+        this(
+                port,
+                token,
+                callbackTimeout,
+                Objects.requireNonNull(callbackTimeout, "callbackTimeout").plus(REQUEST_ALLOWANCE),
+                callback,
+                observation,
+                progress
+        );
+    }
+
+    /**
+     * {@code exchangeTimeout} bounds each whole exchange, from its request line to its response,
+     * so it must exceed {@code callbackTimeout}.
+     */
+    ControlHttpServer(
+            int port,
+            String token,
+            Duration callbackTimeout,
+            Duration exchangeTimeout,
+            ClientThreadControl callback,
+            Supplier<byte[]> observation,
+            Supplier<byte[]> progress
+    ) throws IOException {
         if (port < 0 || port > 65_535) {
             throw new IllegalArgumentException("port must be between 0 and 65535");
         }
@@ -128,6 +159,10 @@ final class ControlHttpServer implements AutoCloseable {
         if (callbackTimeout.isZero() || callbackTimeout.isNegative()) {
             throw new IllegalArgumentException("callbackTimeout must be positive");
         }
+        if (Objects.requireNonNull(exchangeTimeout, "exchangeTimeout").compareTo(callbackTimeout) <= 0) {
+            throw new IllegalArgumentException("exchangeTimeout must exceed callbackTimeout");
+        }
+        this.exchangeTimeoutNanos = exchangeTimeout.toNanos();
         this.callback = Objects.requireNonNull(callback, "callback");
         this.observation = observation;
         this.progress = progress;
@@ -141,7 +176,15 @@ final class ControlHttpServer implements AutoCloseable {
                         .name("schematic-supervisor-control-", 0)
                         .factory()
         );
-        server.setExecutor(executor);
+        this.deadlines = new ScheduledThreadPoolExecutor(
+                1,
+                Thread.ofPlatform()
+                        .daemon()
+                        .name("schematic-supervisor-control-deadline")
+                        .factory()
+        );
+        deadlines.setRemoveOnCancelPolicy(true);
+        server.setExecutor(this::runWithDeadline);
         server.createContext("/", this::handle);
     }
 
@@ -172,6 +215,33 @@ final class ControlHttpServer implements AutoCloseable {
         }
         server.stop(0);
         executor.shutdownNow();
+        deadlines.shutdownNow();
+    }
+
+    /**
+     * Runs one exchange on a worker under a deadline. The JDK server reads the request line,
+     * headers and body on these two workers, before and inside {@link #handle}, so a client that
+     * stops sending would otherwise hold a worker indefinitely and block observations and
+     * Pause/Stop, with or without a token. The blocking channel read is interruptible, so the
+     * interrupt closes that connection.
+     */
+    private void runWithDeadline(Runnable exchange) {
+        executor.execute(() -> {
+            ExchangeDeadline deadline = new ExchangeDeadline(Thread.currentThread());
+            ScheduledFuture<?> timer;
+            try {
+                timer = deadlines.schedule(deadline, exchangeTimeoutNanos, TimeUnit.NANOSECONDS);
+            } catch (RejectedExecutionException closing) {
+                // close() already stopped the server, which closes this connection.
+                return;
+            }
+            try {
+                exchange.run();
+            } finally {
+                deadline.finish();
+                timer.cancel(false);
+            }
+        });
     }
 
     private void handle(HttpExchange exchange) throws IOException {
@@ -534,6 +604,29 @@ final class ControlHttpServer implements AutoCloseable {
                 safe.append(Character.isISOControl(character) ? ' ' : character);
             }
             return safe.toString();
+        }
+    }
+
+    /** Interrupts its worker once the exchange outlives the deadline, and never after it finished. */
+    private static final class ExchangeDeadline implements Runnable {
+        private final Thread worker;
+        private boolean finished;
+
+        ExchangeDeadline(Thread worker) {
+            this.worker = worker;
+        }
+
+        @Override
+        public synchronized void run() {
+            if (!finished) {
+                worker.interrupt();
+            }
+        }
+
+        /** Called on the worker; a deadline that fired during this exchange must not reach its next one. */
+        synchronized void finish() {
+            finished = true;
+            Thread.interrupted();
         }
     }
 

@@ -3,7 +3,8 @@
 Example: python scripts/update_automation_mod.py --artifact build/automation-mods/schematic-supervisor-0.2.0.jar
          --expected-sha256 HASH --test-report data/validation.json
 A staged jar with a new version in its filename replaces the installed supervisor jar under the new name.
-A profile installed before shop.json existed gets one that keeps its shop purchases on.
+A profile whose installed supervisor predates 0.2.0 gets a shop.json that keeps its shop purchases on;
+newer profiles keep their own choice, which is off unless the installer was told otherwise.
 The JSON report must bind sha256 to java_tests > 0 and failures/errors/skipped == 0.
 Its optional integrated_features object declares known implementation features using
 JSON booleans. These are source/test attestations, never live verification or settings.
@@ -33,6 +34,7 @@ MAX_JSON = 8 * 1024 * 1024
 # Mods before 0.2.0 always bought from the captured shop; newer ones buy only when shop.json says so.
 SHOP_SETTINGS = "shop.json"
 SHOP_KEPT_ON = {"enabled": True}
+SHOP_SETTINGS_VERSION = (0, 2, 0)
 INTEGRATED_FEATURES = frozenset({
     "temporary_supports_integrated", "obstruction_diagnostics", "passive_shop_history",
     "loose_item_clearing_fix", "moss_pickup_reselection", "moss_deposit_receipts",
@@ -145,15 +147,32 @@ def state_snapshot(root: Path, directory: Path) -> dict[str, bytes]:
     return result
 
 
-def supervisor_id(path: Path | io.BytesIO) -> bool:
+def mod_metadata(path: Path | io.BytesIO) -> dict:
     try:
         with zipfile.ZipFile(path) as archive:
             info = archive.getinfo("fabric.mod.json")
             if info.file_size > MAX_JSON:
                 raise ValueError("Mod metadata exceeds the size limit.")
-            return json.loads(archive.read(info)).get("id") == "schematic_supervisor"
-    except (OSError, KeyError, zipfile.BadZipFile, ValueError, AttributeError) as error:
+            metadata = json.loads(archive.read(info))
+    except (OSError, KeyError, zipfile.BadZipFile, ValueError) as error:
         raise ValueError("Cannot identify a local mod jar; update refused.") from error
+    if not isinstance(metadata, dict):
+        raise ValueError("Cannot identify a local mod jar; update refused.")
+    return metadata
+
+
+def supervisor_id(path: Path | io.BytesIO) -> bool:
+    return mod_metadata(path).get("id") == "schematic_supervisor"
+
+
+def predates_shop_settings(jar: bytes) -> bool:
+    """Whether a jar declares a version before 0.2.0, which bought without shop.json.
+
+    A missing or unreadable version counts as newer, so purchases stay off.
+    """
+    version = mod_metadata(io.BytesIO(jar)).get("version")
+    match = re.fullmatch(r"(\d+)\.(\d+)\.(\d+)(?:[-+].*)?", version) if isinstance(version, str) else None
+    return match is not None and tuple(int(part) for part in match.groups()) < SHOP_SETTINGS_VERSION
 
 
 def update(workspace: Path, artifact: Path, expected_sha256: str, test_report: Path,
@@ -196,6 +215,7 @@ def update(workspace: Path, artifact: Path, expected_sha256: str, test_report: P
     if renamed and destination.exists():
         raise ValueError("Another file already uses the staged filename; inspect the mods folder.")
     previous_jar = current.read_bytes()
+    keep_shop_purchases = predates_shop_settings(previous_jar)
     with installation_path.open("rb") as source:
         previous_metadata = source.read(MAX_JSON + 1)
     metadata = json_object(previous_metadata)
@@ -255,9 +275,10 @@ def update(workspace: Path, artifact: Path, expected_sha256: str, test_report: P
                 or state_snapshot(root, state) != saved):
             raise ValueError("Jar or saved build state changed during replacement; inspect the backup.")
         entry.update(status="installed", checkpoint_unchanged=True)
-        # Older jars ignore shop.json, so it stays even if a later step rolls the jar back.
+        # Only a profile that bought before shop.json existed keeps buying. Older jars ignore
+        # shop.json, so it stays even if a later step rolls the jar back.
         shop_settings = contained(root, state / SHOP_SETTINGS)
-        if not shop_settings.exists():
+        if keep_shop_purchases and not shop_settings.exists():
             atomic_json(shop_settings, SHOP_KEPT_ON)
             entry["shop_settings_created"] = True
         # Preserve the complete previous feature and verification evidence in history.

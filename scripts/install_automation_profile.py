@@ -1,4 +1,7 @@
-"""Install a separate launcher profile from the verified local mod bundle."""
+"""Install a separate launcher profile from the verified local mod bundle.
+
+Every input is checked before the profile changes; a failure while writing puts back what was changed.
+"""
 
 from __future__ import annotations
 
@@ -54,6 +57,52 @@ def atomic_json(path: Path, value: object) -> None:
         temporary.unlink(missing_ok=True)
 
 
+def atomic_bytes(path: Path, data: bytes) -> None:
+    with tempfile.NamedTemporaryFile(dir=path.parent, suffix=".tmp", delete=False) as output:
+        temporary = Path(output.name)
+        output.write(data)
+    try:
+        os.replace(temporary, path)
+    finally:
+        temporary.unlink(missing_ok=True)
+
+
+def saved_settings(path: Path, description: str, default: dict) -> dict:
+    """A settings object saved as JSON, or the default when there is no file."""
+    if not path.exists():
+        return default
+    try:
+        value = json.loads(path.read_text(encoding="utf-8"))
+    except ValueError as error:
+        raise ValueError(f"{description} in {path} are not valid JSON: {error}") from error
+    if not isinstance(value, dict):
+        raise ValueError(f"{description} must be an object.")
+    return value
+
+
+class Undo:
+    """The previous bytes of every file an installation changes, put back newest first if it fails."""
+
+    def __init__(self) -> None:
+        self._saved: list[tuple[Path, bytes | None]] = []
+
+    def save(self, path: Path) -> None:
+        self._saved.append((path, path.read_bytes() if path.exists() else None))
+
+    def restore(self) -> list[Path]:
+        """Returns the files that could not be put back."""
+        failed = []
+        for path, data in reversed(self._saved):
+            try:
+                if data is None:
+                    path.unlink(missing_ok=True)
+                else:
+                    atomic_bytes(path, data)
+            except OSError:
+                failed.append(path)
+        return failed
+
+
 def install(minecraft: Path, python_exe: Path, agent_exe: Path,
             schematic: Path | None = None, defer_planting: bool | None = None,
             auto_repair_hoes: bool | None = None,
@@ -77,14 +126,11 @@ def install(minecraft: Path, python_exe: Path, agent_exe: Path,
     minecraft = minecraft.resolve(strict=True)
     game = ROOT / "runtime" / "game"
     supervisor_settings_path = game / "config" / "schematic-supervisor" / "settings.json"
-    supervisor_settings = (json.loads(supervisor_settings_path.read_text(encoding="utf-8"))
-                           if supervisor_settings_path.exists() else {
+    supervisor_settings = saved_settings(supervisor_settings_path, "Supervisor settings", {
         "companionUri": "http://127.0.0.1:8766", "controlPort": 8765,
         "placementBlocksPerTick": 20000, "verificationBlocksPerTick": 20000,
         "interactionCooldownTicks": 4, "pathGoalRadius": 3, "minimumFood": 1,
     })
-    if not isinstance(supervisor_settings, dict):
-        raise ValueError("Supervisor settings must be an object.")
     if defer_planting is not None and type(defer_planting) is not bool:
         raise ValueError("Deferred planting selection must be a boolean.")
     if type(supervisor_settings.get("deferPlanting", False)) is not bool:
@@ -122,10 +168,18 @@ def install(minecraft: Path, python_exe: Path, agent_exe: Path,
         raise ValueError("Shop purchase selection must be a boolean.")
     # shop.json keeps any captured layout; only its enabled flag is set here, and only when asked.
     shop_settings_path = game / "config" / "schematic-supervisor" / "shop.json"
-    shop_settings = (json.loads(shop_settings_path.read_text(encoding="utf-8"))
-                     if shop_settings_path.exists() else {})
-    if not isinstance(shop_settings, dict):
-        raise ValueError("Shop settings must be an object.")
+    shop_settings = saved_settings(shop_settings_path, "Shop settings", {})
+    runner_settings_path = ROOT / "companion" / "agent.local.json"
+    runner_settings = {
+        "model": "gpt-6-astra",
+        "model_policy": "on-error",
+        "reasoning_effort": "medium",
+        **saved_settings(runner_settings_path, "Runner settings", {}),
+        "python_exe": str(python_exe),
+        "agent_executable": str(agent_exe),
+        "token_file": str(game / "config" / "schematic-supervisor" / "protocol-token.txt"),
+        "game_directory": str(game),
+    }
     schematic_destination = game / "schematics" / source_name
     if schematic_destination.exists() and not schematic_destination.is_file():
         raise ValueError("The schematic destination exists but is not a regular file.")
@@ -161,101 +215,117 @@ def install(minecraft: Path, python_exe: Path, agent_exe: Path,
     if (version.get("id") != VERSION_ID or version.get("inheritsFrom") != "1.21.8"
             or version.get("mainClass") != "net.fabricmc.loader.impl.launch.knot.KnotClient"):
         raise ValueError("Loader profile does not match the pinned game and loader.")
-    # Build a new game directory; existing game mods and worlds stay in place.
-    stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S%fZ")
-    backup = ROOT / "runtime" / "installation-backups" / stamp
-    backup.mkdir(parents=True)
-    shutil.copy2(launcher_path, backup / "launcher_profiles.json")
-    ensure_game_closed()
+    # Identify every installed jar before writing anything, so an unreadable one cannot stop the
+    # installation after the old supervisor has already been moved away.
     target_mods = game / "mods"
-    target_mods.mkdir(parents=True, exist_ok=True)
     staged_names = {path.name for path in mods}
-    for installed in target_mods.glob("*.jar"):
+    retired = []
+    for installed in sorted(target_mods.glob("*.jar")):
         try:
             with zipfile.ZipFile(installed) as archive:
                 installed_id = json.loads(archive.read("fabric.mod.json"))["id"]
-        except (OSError, ValueError, KeyError, zipfile.BadZipFile):
+        except (OSError, ValueError, KeyError, TypeError, zipfile.BadZipFile):
             raise ValueError(f"Cannot identify installed mod {installed.name}; inspect it before updating.")
         if installed_id in managed_ids and installed.name not in staged_names:
-            # Both exact paths are inside this project's dedicated runtime.
+            # The exact path is inside this project's dedicated runtime.
             if installed.resolve().parent != target_mods.resolve():
                 raise ValueError("Installed mod resolved outside the automation directory.")
-            if backup.resolve().parent.parent != (ROOT / "runtime").resolve():
-                raise ValueError("Backup directory resolved outside the automation runtime.")
-            installed.rename(backup / installed.name)
-    for path in mods:
-        destination = target_mods / path.name
-        if destination.exists() and destination.read_bytes() != path.read_bytes():
-            shutil.copy2(destination, backup / path.name)
-        shutil.copy2(path, destination)
-    if supervisor_settings_path.exists():
-        shutil.copy2(supervisor_settings_path, backup / "supervisor-settings.json")
-    atomic_json(supervisor_settings_path, supervisor_settings)
-    if shop_purchases is not None:
-        if shop_settings_path.exists():
-            shutil.copy2(shop_settings_path, backup / "shop.json")
-        atomic_json(shop_settings_path, shop_settings | {"enabled": shop_purchases})
-    for name in ("options.txt", "servers.dat"):
-        source = minecraft / name
-        if source.is_file() and not (game / name).exists():
-            shutil.copy2(source, game / name)
-    schematic_dir = game / "schematics"
-    schematic_dir.mkdir(exist_ok=True)
-    same_schematic_file = schematic_destination.exists() and source_schematic.samefile(schematic_destination)
-    copied_schematic = False
-    schematic_backup = None
-    if not same_schematic_file and (
-            not schematic_destination.exists() or schematic_destination.read_bytes() != schematic_bytes):
-        if schematic_destination.exists():
-            schematic_backup = backup / "schematics" / source_name
-            schematic_backup.parent.mkdir(parents=True)
-            shutil.copy2(schematic_destination, schematic_backup)
-        temporary_schematic = None
-        try:
-            with tempfile.NamedTemporaryFile(mode="wb", dir=schematic_dir, suffix=".tmp", delete=False) as output:
-                temporary_schematic = Path(output.name)
-                output.write(schematic_bytes)
-                output.flush()
-                os.fsync(output.fileno())
-            shutil.copystat(source_schematic, temporary_schematic)
-            os.replace(temporary_schematic, schematic_destination)
-        finally:
-            if temporary_schematic is not None:
-                temporary_schematic.unlink(missing_ok=True)
-        copied_schematic = True
-    if not version_path.exists():
-        atomic_json(version_path, version)
-    now = datetime.now(timezone.utc).isoformat(timespec="milliseconds").replace("+00:00", "Z")
-    profiles[PROFILE_ID] = {
-        **(previous or {}), "name": "Schematic Supervisor", "type": "custom",
-        "gameDir": str(game), "lastVersionId": VERSION_ID, "icon": "Crafting_Table",
-        "created": (previous or {}).get("created", now),
-        "javaArgs": "-Xmx4G -XX:+UseG1GC",
-    }
+            retired.append(installed)
+    # Build a new game directory; existing game mods and worlds stay in place.
+    stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S%fZ")
+    backup = ROOT / "runtime" / "installation-backups" / stamp
+    if retired and backup.resolve().parent.parent != (ROOT / "runtime").resolve():
+        raise ValueError("Backup directory resolved outside the automation runtime.")
+    backup.mkdir(parents=True)
+    shutil.copy2(launcher_path, backup / "launcher_profiles.json")
+    ensure_game_closed()
     if launcher_path.read_bytes() != original:
         raise ValueError("Launcher profiles changed during preparation; close the launcher and rerun.")
-    atomic_json(launcher_path, launcher)
-    settings_path = ROOT / "companion" / "agent.local.json"
-    existing_settings = json.loads(settings_path.read_text(encoding="utf-8")) if settings_path.exists() else {}
-    settings = {
-        "model": "gpt-6-astra",
-        "model_policy": "on-error",
-        "reasoning_effort": "medium",
-        **existing_settings,
-        "python_exe": str(python_exe),
-        "agent_executable": str(agent_exe),
-        "token_file": str(game / "config" / "schematic-supervisor" / "protocol-token.txt"),
-        "game_directory": str(game),
-    }
-    atomic_json(ROOT / "companion" / "agent.local.json", settings)
-    report = {"profile": "Schematic Supervisor", "version": VERSION_ID,
-              "game_directory": str(game), "backup_directory": str(backup),
-              "schematic": {"source_name": source_name, "sha256": schematic_hash,
-                            "installed_path": str(schematic_destination), "copied": copied_schematic,
-                            "backup_path": None if schematic_backup is None else str(schematic_backup)},
-              "mods": [{"name": path.name,
-                        "sha256": hashlib.sha256(path.read_bytes()).hexdigest()} for path in mods]}
-    atomic_json(ROOT / "runtime" / "installation.json", report)
+    # A failure from here on puts back every file already changed, so installation.json keeps
+    # describing the jars that are actually installed.
+    undo = Undo()
+    try:
+        target_mods.mkdir(parents=True, exist_ok=True)
+        for installed in retired:
+            undo.save(installed)
+            installed.rename(backup / installed.name)
+        for path in mods:
+            destination = target_mods / path.name
+            if destination.exists() and destination.read_bytes() != path.read_bytes():
+                shutil.copy2(destination, backup / path.name)
+            undo.save(destination)
+            shutil.copy2(path, destination)
+        if supervisor_settings_path.exists():
+            shutil.copy2(supervisor_settings_path, backup / "supervisor-settings.json")
+        undo.save(supervisor_settings_path)
+        atomic_json(supervisor_settings_path, supervisor_settings)
+        if shop_purchases is not None:
+            if shop_settings_path.exists():
+                shutil.copy2(shop_settings_path, backup / "shop.json")
+            undo.save(shop_settings_path)
+            atomic_json(shop_settings_path, shop_settings | {"enabled": shop_purchases})
+        for name in ("options.txt", "servers.dat"):
+            source = minecraft / name
+            if source.is_file() and not (game / name).exists():
+                undo.save(game / name)
+                shutil.copy2(source, game / name)
+        schematic_dir = game / "schematics"
+        schematic_dir.mkdir(exist_ok=True)
+        same_schematic_file = schematic_destination.exists() and source_schematic.samefile(schematic_destination)
+        copied_schematic = False
+        schematic_backup = None
+        if not same_schematic_file and (
+                not schematic_destination.exists() or schematic_destination.read_bytes() != schematic_bytes):
+            if schematic_destination.exists():
+                schematic_backup = backup / "schematics" / source_name
+                schematic_backup.parent.mkdir(parents=True)
+                shutil.copy2(schematic_destination, schematic_backup)
+            undo.save(schematic_destination)
+            temporary_schematic = None
+            try:
+                with tempfile.NamedTemporaryFile(mode="wb", dir=schematic_dir, suffix=".tmp", delete=False) as output:
+                    temporary_schematic = Path(output.name)
+                    output.write(schematic_bytes)
+                    output.flush()
+                    os.fsync(output.fileno())
+                shutil.copystat(source_schematic, temporary_schematic)
+                os.replace(temporary_schematic, schematic_destination)
+            finally:
+                if temporary_schematic is not None:
+                    temporary_schematic.unlink(missing_ok=True)
+            copied_schematic = True
+        if not version_path.exists():
+            undo.save(version_path)
+            atomic_json(version_path, version)
+        now = datetime.now(timezone.utc).isoformat(timespec="milliseconds").replace("+00:00", "Z")
+        profiles[PROFILE_ID] = {
+            **(previous or {}), "name": "Schematic Supervisor", "type": "custom",
+            "gameDir": str(game), "lastVersionId": VERSION_ID, "icon": "Crafting_Table",
+            "created": (previous or {}).get("created", now),
+            "javaArgs": "-Xmx4G -XX:+UseG1GC",
+        }
+        if launcher_path.read_bytes() != original:
+            raise ValueError("Launcher profiles changed during preparation; close the launcher and rerun.")
+        undo.save(launcher_path)
+        atomic_json(launcher_path, launcher)
+        undo.save(runner_settings_path)
+        atomic_json(runner_settings_path, runner_settings)
+        report = {"profile": "Schematic Supervisor", "version": VERSION_ID,
+                  "game_directory": str(game), "backup_directory": str(backup),
+                  "schematic": {"source_name": source_name, "sha256": schematic_hash,
+                                "installed_path": str(schematic_destination), "copied": copied_schematic,
+                                "backup_path": None if schematic_backup is None else str(schematic_backup)},
+                  "mods": [{"name": path.name,
+                            "sha256": hashlib.sha256(path.read_bytes()).hexdigest()} for path in mods]}
+        installation_path = ROOT / "runtime" / "installation.json"
+        undo.save(installation_path)
+        atomic_json(installation_path, report)
+    except BaseException as error:
+        failed = undo.restore()
+        if failed and isinstance(error, Exception):
+            raise ValueError(f"{error}; the previous profile could not be fully restored "
+                             f"({', '.join(map(str, failed))}). Its backups are in {backup}.") from error
+        raise
     return report
 
 

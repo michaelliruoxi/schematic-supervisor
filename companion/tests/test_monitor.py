@@ -319,6 +319,39 @@ print("Main exiting", flush=True)
             self.assertIn("pace", service.snapshot())
             service.stop()
 
+    def test_last_known_progress_is_kept_only_for_its_own_plan(self):
+        current = {"plan": "sha256:plan-a", "revision": 4, "fails": False}
+        now = [1000.0]
+
+        def reply(request):
+            if request["path"] == "/v1/progress":
+                if current["fails"]:
+                    return 500, {"accepted": False, "message": "Progress failed."}
+                return 200, progress_payload(plan_id=current["plan"], revision=current["revision"])
+            return 200, observation(plan_id=current["plan"], progress_revision=current["revision"])
+
+        with RecordingEndpoint(reply) as endpoint:
+            service = self.service(endpoint, clock=lambda: now[0])
+            wait_for(lambda: service.snapshot()["progress_status"] == "ok")
+            current.update(revision=5, fails=True)
+            service.refresh()
+            wait_for(lambda: service.snapshot()["progress_status"] == "error")
+            self.assertEqual("sha256:plan-a", service.snapshot()["progress"].plan_id)
+            current.update(plan="sha256:plan-b", revision=6)
+            service.refresh()
+            wait_for(lambda: service.snapshot()["observation"]["plan_id"] == "sha256:plan-b")
+            snapshot = service.snapshot()
+            self.assertIsNone(snapshot["progress"])
+            self.assertEqual("error", snapshot["progress_status"])
+            self.assertIsNone(snapshot["pace"])
+            # A failed fetch is retried at the next revision or after the 30-second refresh.
+            current.update(fails=False)
+            now[0] += 30
+            service.refresh()
+            wait_for(lambda: service.snapshot()["progress_status"] == "ok")
+            self.assertEqual("sha256:plan-b", service.snapshot()["progress"].plan_id)
+            service.stop()
+
     def test_missing_progress_endpoint_is_marked_unsupported_without_refetching(self):
         def reply(request):
             if request["path"] == "/v1/progress":

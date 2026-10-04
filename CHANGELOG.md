@@ -1,5 +1,33 @@
 # Changelog
 
+## 2026-10-04: Fixes from an outside review (mod, monitor, agent runner, profile scripts)
+
+The mod jar must be installed with Minecraft closed, and the monitor exe rebuilt.
+
+- **Shop opt-in survives updates.** The profile updater writes `{"enabled": true}` only when the
+  installed supervisor jar is older than 0.2.0. It used to do so for any profile without
+  `shop.json`, which switched purchases on at the first update of a profile installed with 0.2.0.
+- **A stalled connection can't block the control server.** Each request, from its first line to
+  its response, must finish within 8 seconds, or the mod drops the connection. Before, two
+  connections that stopped sending held both of its threads, with or without the pairing token,
+  and observations and Pause or Stop over HTTP went unanswered.
+- **Local requests never go through a proxy.** The legacy companion
+  (`python -m supervisor_companion`) and its Ollama backend ignore environment and system proxies
+  for `127.0.0.1` and `localhost`, as the monitor already did. Through a proxy, its controls never
+  reached the mod and the pairing token went to the proxy. Phone alerts and the remote AI endpoint
+  still use the proxy.
+- **The agent runner pauses even when its log fails.** A full disk or a closed console no longer
+  ends supervision without the safety Pause, and an unexpected error pauses before the runner
+  exits. A log that can't be written is reported once as `audit_log_unavailable`.
+- **The installer checks everything before it changes the profile.** An unreadable
+  `companion\agent.local.json` or an unidentifiable jar in the mods folder stops it before anything
+  is written, and a failure while writing puts back the files already changed, so
+  `installation.json` keeps matching the installed jars and the updater keeps working.
+- **Monitor:** after a plan change, the percentage, stage bar and map no longer show the previous
+  plan's progress as last known while the new plan's progress can't be read.
+- **Build:** `stageAutomationMods` syncs `build\automation-mods`, so a version bump no longer leaves
+  the old supervisor jar beside the new one.
+
 ## 2026-10-01: Mod 0.2.0 and monitor 0.4.0: any full block, opt-in shop routes, MIT license
 
 The mod jar is now `schematic-supervisor-0.2.0.jar`; install it with Minecraft closed. The profile

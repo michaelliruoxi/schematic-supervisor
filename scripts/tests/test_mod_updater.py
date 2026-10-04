@@ -130,11 +130,21 @@ class ModUpdaterTests(unittest.TestCase):
         path.write_text(json.dumps(value), encoding="utf-8")
 
     @staticmethod
-    def make_jar(path, marker, mod_id="schematic_supervisor"):
+    def make_jar(path, marker, mod_id="schematic_supervisor", version=None):
         path.parent.mkdir(parents=True, exist_ok=True)
         with zipfile.ZipFile(path, "w") as archive:
-            archive.writestr("fabric.mod.json", json.dumps({"id": mod_id, "version": marker}))
+            archive.writestr("fabric.mod.json", json.dumps(
+                {"id": mod_id, "version": marker if version is None else version}))
             archive.writestr("test-content", marker)
+
+    def install_version(self, version):
+        """Replace the installed fixture jar with one declaring this version, recorded in the metadata."""
+        self.make_jar(self.installed, "old", version=version)
+        self.old_jar = self.installed.read_bytes()
+        metadata = updater.read_object(self.metadata)
+        metadata["mods"][0]["sha256"] = updater.sha256(self.old_jar)
+        self.write_json(self.metadata, metadata)
+        self.old_metadata = self.metadata.read_bytes()
 
     def update(self, **options):
         return updater.update(self.root, self.artifact, self.expected, self.report,
@@ -344,6 +354,7 @@ class ModUpdaterTests(unittest.TestCase):
         self.assert_unchanged()
 
     def test_an_older_profile_keeps_its_shop_purchases_and_an_existing_choice_is_kept(self):
+        self.install_version("0.1.0")
         result = self.update()
         shop = self.state / "shop.json"
         self.assertEqual({"enabled": True}, updater.read_object(shop))
@@ -357,6 +368,16 @@ class ModUpdaterTests(unittest.TestCase):
         second = self.update()
         self.assertEqual({"enabled": False}, updater.read_object(shop))
         self.assertNotIn("shop_settings_created", second)
+
+    def test_a_profile_from_0_2_0_or_with_an_unreadable_version_keeps_purchases_off(self):
+        shop = self.state / "shop.json"
+        for version in ("0.2.0", "0.2.0+build.7", "0.10.0", "1.0.0", "old", "", "v0.1.0", 7, [0, 1, 0]):
+            with self.subTest(version=version):
+                self.install_version(version)
+                result = self.update()
+                self.assertFalse(shop.exists(), "a profile that installed opted out must stay opted out")
+                self.assertNotIn("shop_settings_created", result)
+                self.assertNotIn("shop_settings_created", updater.read_object(self.metadata)["last_mod_update"])
 
     def test_post_commit_checkpoint_change_rolls_back_only_updater_files(self):
         calls = 0

@@ -222,6 +222,12 @@ class MonitorService:
                 self._event_locked("Plan loaded." if plan_id else "Plan unloaded.")
                 self._logger.info("Plan changed to %s", plan_id)
             self._plan_id = plan_id
+        # Progress, even last known, is shown only for the plan it describes; the pace restarts with it.
+        # Older mods don't report plan_id.
+        if ("plan_id" in observation and isinstance(self._progress, Progress)
+                and self._progress.plan_id != plan_id):
+            self._progress = None
+            self._fetched_revision = _UNSET
         self._note_build_check_locked(observation.get("build_check"))
         layer = observation.get("current_layer")
         if not isinstance(layer, dict):

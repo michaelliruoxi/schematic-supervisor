@@ -72,7 +72,8 @@ dependencies {
     testRuntimeOnly "org.junit.platform:junit-platform-launcher"
 }
 
-tasks.register("stageAutomationMods", Copy) {
+// Sync, not Copy: after a version bump the previous supervisor jar must not stay beside the new one.
+tasks.register("stageAutomationMods", Sync) {
     group = "distribution"
     description = "Stages the supervisor and its pinned mods for an automation profile."
     dependsOn tasks.remapJar, tasks.verifyBaritoneArtifact

@@ -7,7 +7,10 @@ from dataclasses import dataclass
 from http.client import HTTPException
 from typing import Any, Mapping
 from urllib.error import HTTPError, URLError
-from urllib.request import HTTPRedirectHandler, Request, build_opener
+from urllib.parse import urlsplit
+from urllib.request import HTTPRedirectHandler, OpenerDirector, ProxyHandler, Request, build_opener
+
+from .config import is_loopback_host
 
 MAX_RESPONSE_BYTES = 262_144
 
@@ -35,6 +38,19 @@ class _RejectRedirects(HTTPRedirectHandler):
         newurl: str,
     ) -> None:
         return None
+
+
+def _opener(url: str) -> OpenerDirector:
+    """A per-call opener, so process-global urllib state cannot change its policy.
+
+    Redirects are refused. A loopback endpoint is on this computer, so an
+    environment or system proxy must never receive its requests or tokens;
+    remote endpoints, such as phone alerts, keep the user's proxy.
+    """
+    hostname = urlsplit(url).hostname
+    if hostname is not None and is_loopback_host(hostname):
+        return build_opener(ProxyHandler({}), _RejectRedirects())
+    return build_opener(_RejectRedirects())
 
 
 def post_json(
@@ -68,10 +84,7 @@ def post_json(
         method="POST",
     )
     try:
-        # Build a per-call opener so process-global urllib state cannot change
-        # the redirect policy.
-        opener = build_opener(_RejectRedirects())
-        with opener.open(request, timeout=timeout_seconds) as response:
+        with _opener(url).open(request, timeout=timeout_seconds) as response:
             raw = response.read(max_response_bytes + 1)
             if len(raw) > max_response_bytes:
                 raise HttpJsonError("HTTP response exceeded the size limit")
@@ -119,8 +132,7 @@ def post_text(
         request_headers.update(headers)
     request = Request(url, data=text.encode("utf-8"), headers=request_headers, method="POST")
     try:
-        opener = build_opener(_RejectRedirects())
-        with opener.open(request, timeout=timeout_seconds) as response:
+        with _opener(url).open(request, timeout=timeout_seconds) as response:
             response.read(MAX_RESPONSE_BYTES)
             return response.status
     except HTTPError as error:
